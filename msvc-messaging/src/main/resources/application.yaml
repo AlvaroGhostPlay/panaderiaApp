@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: ${SERVER_NAME}
+  rabbitmq:
+    host: ${RABBIT_HOST}
+    port: ${RABBIT_PORT}
+    username: ${RABBIT_USER}
+    password: ${RABBIT_PASSWORD}
+  mail:
+    host: ${EMAIL_HOST}
+    port: ${EMAIL_PORT}
+    username: ${EMAIL_USER}
+    password: ${EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE}
+  instance:
+    prefer-ip-address: true
+
+server:
+  port: ${SERVER_PORT}
+
+messaging:
+
+  exchange:
+    name: panaderia.exchange
+
+  notification:
+    queue: notification.queue
+    routingKey: notification
+
+  sms:
+    queue: sms.queue
+    routingKey: sms
+
+  push:
+    queue: push.queue
+    routingKey: push

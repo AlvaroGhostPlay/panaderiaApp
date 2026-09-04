@@ -1,0 +1,155 @@
+version: '3.8'
+
+services:
+
+  postgres-db:
+    image: postgres:latest
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: store-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: sasa
+    ports:
+      - "5432:5432"
+    networks:
+      - red-panaderia
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "15672:15672"
+    networks:
+      - red-panaderia
+
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      SERVER_NAME: eureka-server
+      SERVER_PORT: "8761"
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+    depends_on:
+      - postgres-db
+    networks:
+      - red-panaderia
+
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_NAME: gateway
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: "http://eureka-server:8761/eureka/"
+    depends_on:
+      - eureka-server
+      - msvc-users-roles
+      - msvc-clients
+    networks:
+      - red-panaderia
+
+  images-service:
+    build:
+      context: ./images-service
+      dockerfile: Dockerfile
+    container_name: images-service
+    environment:
+      SERVER_NAME: images-service
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: "http://eureka-server:8761/eureka/"
+    depends_on:
+      - eureka-server
+    networks:
+      - red-panaderia
+
+  msvc-messaging:
+    build:
+      context: ./msvc-messaging
+      dockerfile: Dockerfile
+    container_name: msvc-messaging
+    environment:
+      SERVER_NAME: msvc-messaging
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: "http://eureka-server:8761/eureka/"
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: "5672"
+      RABBIT_USER: guest
+      RABBIT_PASSWORD: guest
+      EMAIL_HOST: smtp.gmail.com
+      EMAIL_PORT: "587"
+      EMAIL_USER: alvarox129.edu@gmail.com
+      EMAIL_PASSWORD: wfdcarcawhdkbjla
+      SERVER_PORT: "8085"
+    depends_on:
+      - eureka-server
+      - rabbitmq
+      - images-service
+    networks:
+      - red-panaderia
+
+  msvc-clients:
+    build:
+      context: ./msvc-clients
+      dockerfile: Dockerfile
+    container_name: msvc-clients
+    environment:
+      SERVER_NAME: msvc-clients
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: "http://eureka-server:8761/eureka/"
+      DATABASE_URL: "jdbc:postgresql://postgres-db:5432/store-db"
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: sasa
+      JPA_SHOW_SQL: "true"
+      JPA_SHOW_FORMAT_SQL: "true"
+    depends_on:
+      - eureka-server
+      - postgres-db
+    networks:
+      - red-panaderia
+
+  msvc-users-roles:
+    build:
+      context: ./msvc-users_roles
+      dockerfile: Dockerfile
+    container_name: msvc-users-roles
+    environment:
+      SERVER_NAME: msvc-users-roles
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: "http://eureka-server:8761/eureka/"
+      DATABASE_URL: "jdbc:postgresql://postgres-db:5432/store-db"
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: sasa
+      JPA_SHOW_SQL: "true"
+      JPA_SHOW_FORMAT_SQL: "true"
+    depends_on:
+      - eureka-server
+      - postgres-db
+    networks:
+      - red-panaderia
+
+  msvc-content:
+    build:
+      context: ./msvc-nadbar
+      dockerfile: Dockerfile
+    container_name: msvc-content
+    environment:
+      SERVER_NAME: msvc-content
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: "http://eureka-server:8761/eureka/"
+      DATABASE_URL: "jdbc:postgresql://postgres-db:5432/store-db"
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: sasa
+      JPA_SHOW_SQL: "true"
+      JPA_SHOW_FORMAT_SQL: "true"
+    depends_on:
+      - eureka-server
+      - postgres-db
+    networks:
+      - red-panaderia
+
+networks:
+  red-panaderia:
+    driver: bridge

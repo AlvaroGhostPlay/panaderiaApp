@@ -1,0 +1,69 @@
+spring:
+  application:
+    name: ${SERVER_NAME}
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      server:
+        webmvc:
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - "http://localhost:4200"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - PATCH
+                  - OPTIONS
+                allowedHeaders:
+                  - "*"
+
+          routes:
+            - id: msvc-content
+              uri: lb://MSVC-CONTENT
+              predicates:
+                - Path=/api/v1/contents/**
+              filters:
+                - StripPrefix=3
+                - AddResponseHeader=Access-Control-Allow-Origin,http://localhost:4200
+            - id: msvc-users-roles
+              uri: lb://MSVC-USERS-ROLES
+              predicates:
+                - Path=/api/v1/users/roles/**
+              filters:
+                - StripPrefix=4
+                - AddResponseHeader=Access-Control-Allow-Origin,http://localhost:4200
+            - id: msvc-clients
+              uri: lb://MSVC-CLIENTS
+              predicates:
+                - Path=/api/v1/clients/**
+              filters:
+                - StripPrefix=3
+                - AddResponseHeader=Access-Control-Allow-Origin,http://localhost:4200
+            - id: msvc-messaging
+              uri: lb://MSVC-MESSAGING
+              predicates:
+                - Path=/api/v1/messaging/**
+              filters:
+                - StripPrefix=3
+                - AddResponseHeader=Access-Control-Allow-Origin,http://localhost:4200
+            - id: images-service
+              uri: lb://IMAGES-SERVICE
+              predicates:
+                - Path=/api/v1/images/**
+              filters:
+                - StripPrefix=3
+                - AddResponseHeader=Access-Control-Allow-Origin,http://localhost:4200
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE}
+
+server:
+  port: 8080
