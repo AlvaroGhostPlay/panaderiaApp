@@ -12,6 +12,8 @@ spring:
         format_sql: ${JPA_SHOW_FORMAT_SQL}
         default_schema: storedb
     show-sql: ${JPA_SHOW_SQL}
+    hibernate:
+      ddl-auto: update
 server:
   port: 0
 

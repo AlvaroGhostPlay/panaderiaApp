@@ -14,13 +14,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
 public class FileController {
-    private final String PUBLIC_DIR = "src/main/resources/templates/uploads/public/";
-    private final String PRIVATE_DIR = "uploads/private/";
+    private final String PUBLIC_DIR = "image/uploads/public/";
+    private final String PRIVATE_DIR = "image/uploads/private/";
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadImage(
@@ -62,43 +63,71 @@ public class FileController {
             @RequestParam String filename) {
 
         try {
-            Path filePath = Paths.get(PUBLIC_DIR + filename);
+
+            Path filePath = Paths.get(PUBLIC_DIR)
+                    .resolve(filename)
+                    .normalize();
+
+            if (!Files.exists(filePath)) {
+                return ResponseEntity.notFound().build();
+            }
+
             Resource resource = new UrlResource(filePath.toUri());
 
+            if (!resource.exists() || !resource.isReadable()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            String contentType = Files.probeContentType(filePath);
+
+            if (contentType == null) {
+                contentType = "application/octet-stream";
+            }
+
             return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_JPEG) // O detectarlo dinámicamente
+                    .contentType(MediaType.parseMediaType(contentType))
                     .body(resource);
         } catch (MalformedURLException e) {
-            return ResponseEntity.notFound().build();
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    @PostMapping("/public/images")
-    public ResponseEntity<?> getPublicImagesByname(@RequestBody ImagesRequest request) {
+    @PostMapping("/public/images/map")
+    public ResponseEntity<?> getPublicImages(
+            @RequestBody Map<String, String> images) {
 
-        // Retornamos un Mapa con el formato: { "nombre_imagen.jpg": "data:image/jpeg;base64,xxxx..." }
-        Map<String, String> imagenesBase64 = request.images().stream()
+        Map<String, String> imagesBase64 = images.entrySet()
+                .stream()
                 .collect(Collectors.toMap(
-                        imageName -> imageName, // La clave será el nombre del archivo
-                        imageName -> {
+                        Map.Entry::getKey,
+
+                        entry -> {
                             try {
-                                Path filePath = Paths.get(PUBLIC_DIR, imageName);
+
+                                String imageName = entry.getValue();
+
+                                Path filePath = Paths.get(PUBLIC_DIR)
+                                        .resolve(imageName)
+                                        .normalize();
+
                                 if (!Files.exists(filePath)) {
-                                    return ""; // O manejar una imagen por defecto si no existe
+                                    return "";
                                 }
-                                byte[] fileContent = Files.readAllBytes(filePath);
-                                String base64 = Base64.getEncoder().encodeToString(fileContent);
 
-                                // Detectar el tipo de contenido dinámicamente si es posible, o hardcodear jpeg/png
-                                String contentType = imageName.endsWith(".png") ? "image/png" : "image/jpeg";
+                                byte[] fileContent =
+                                        Files.readAllBytes(filePath);
 
-                                return "data:" + contentType + ";base64," + base64;
+                                return Base64.getEncoder()
+                                        .encodeToString(fileContent);
+
                             } catch (IOException e) {
                                 return "";
                             }
                         }
                 ));
 
-        return ResponseEntity.ok(imagenesBase64);
+        return ResponseEntity.ok(imagesBase64);
     }
 }

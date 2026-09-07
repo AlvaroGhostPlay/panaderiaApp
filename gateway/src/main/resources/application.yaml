@@ -1,69 +1,152 @@
-spring:
-  application:
-    name: ${SERVER_NAME}
-  cloud:
-    gateway:
-      discovery:
-        locator:
-          enabled: true
-      server:
-        webmvc:
-          globalcors:
-            add-to-simple-url-handler-mapping: true
-            cors-configurations:
-              '[/**]':
-                allowedOrigins:
-                  - "http://localhost:4200"
-                allowedMethods:
-                  - GET
-                  - POST
-                  - PUT
-                  - DELETE
-                  - PATCH
-                  - OPTIONS
-                allowedHeaders:
-                  - "*"
-
-          routes:
-            - id: msvc-content
-              uri: lb://MSVC-CONTENT
-              predicates:
-                - Path=/api/v1/contents/**
-              filters:
-                - StripPrefix=3
-                - AddResponseHeader=Access-Control-Allow-Origin,http://localhost:4200
-            - id: msvc-users-roles
-              uri: lb://MSVC-USERS-ROLES
-              predicates:
-                - Path=/api/v1/users/roles/**
-              filters:
-                - StripPrefix=4
-                - AddResponseHeader=Access-Control-Allow-Origin,http://localhost:4200
-            - id: msvc-clients
-              uri: lb://MSVC-CLIENTS
-              predicates:
-                - Path=/api/v1/clients/**
-              filters:
-                - StripPrefix=3
-                - AddResponseHeader=Access-Control-Allow-Origin,http://localhost:4200
-            - id: msvc-messaging
-              uri: lb://MSVC-MESSAGING
-              predicates:
-                - Path=/api/v1/messaging/**
-              filters:
-                - StripPrefix=3
-                - AddResponseHeader=Access-Control-Allow-Origin,http://localhost:4200
-            - id: images-service
-              uri: lb://IMAGES-SERVICE
-              predicates:
-                - Path=/api/v1/images/**
-              filters:
-                - StripPrefix=3
-                - AddResponseHeader=Access-Control-Allow-Origin,http://localhost:4200
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE}
-
 server:
   port: 8080
+
+  servlet:
+    session:
+
+      timeout: 30m
+
+      cookie:
+        name: BFFSESSION
+        http-only: true
+        secure: false
+        same-site: lax
+
+
+spring:
+
+  application:
+    name: ${SERVER_NAME:gateway}
+
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+
+  session:
+    timeout: 30m
+
+    data:
+      redis:
+        namespace: gateway:bff
+
+
+  security:
+    oauth2:
+      client:
+        registration:
+          bff:
+            provider: auth-server
+            client-id: ${GATEWAY_CLIENT_ID:gateway-bff}
+            client-secret: ${GATEWAY_CLIENT_SECRET:gateway-secret-dev}
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+            redirect-uri: ${GATEWAY_REDIRECT_URI:http://gateway.panaderia.test:8080/login/oauth2/code/bff}
+
+            scope:
+              - openid
+              - profile
+              - api
+
+        provider:
+          auth-server:
+            issuer-uri: ${AUTH_ISSUER:http://auth.panaderia.test:9000}
+
+
+  cloud:
+
+    gateway:
+
+      discovery:
+
+        locator:
+
+          enabled: false
+
+
+      server:
+
+        webmvc:
+
+          routes:
+
+            - id: msvc-content
+
+              uri: lb://MSVC-CONTENT
+
+              predicates:
+                - Path=/api/v1/contents/**
+
+              filters:
+                - StripPrefix=3
+                - TokenRelay=
+
+
+            - id: msvc-users-roles
+
+              uri: lb://MSVC-USERS-ROLES
+
+              predicates:
+                - Path=/api/v1/users/roles/**
+
+              filters:
+                - StripPrefix=4
+                - TokenRelay=
+
+
+            - id: msvc-clients
+
+              uri: lb://MSVC-CLIENTS
+
+              predicates:
+                - Path=/api/v1/clients/**
+
+              filters:
+                - StripPrefix=3
+                - TokenRelay=
+
+
+            - id: msvc-messaging
+
+              uri: lb://MSVC-MESSAGING
+
+              predicates:
+                - Path=/api/v1/messaging/**
+
+              filters:
+                - StripPrefix=3
+                - TokenRelay=
+
+
+            - id: images-service
+
+              uri: lb://IMAGES-SERVICE
+
+              predicates:
+                - Path=/api/v1/images/**
+
+              filters:
+                - StripPrefix=3
+                - TokenRelay=
+
+
+eureka:
+
+  client:
+
+    service-url:
+
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:http://eureka-server:8761/eureka/}
+
+
+app:
+
+  frontend-url: ${FRONTEND_URL:http://localhost:4200}
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: TRACE
+    org.springframework.web: DEBUG

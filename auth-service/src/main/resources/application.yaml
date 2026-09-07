@@ -1,0 +1,63 @@
+server:
+  port: 9000
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        name: AUTHSESSION
+        http-only: true
+        secure: false
+        same-site: lax
+
+spring:
+  application:
+    name: auth-service
+
+  datasource:
+    url: ${AUTH_DB_URL:jdbc:postgresql://localhost:5432/store-db?currentSchema=storedb}
+    username: ${AUTH_DB_USERNAME:postgres}
+    password: ${AUTH_DB_PASSWORD:sasa}
+    driver-class-name: org.postgresql.Driver
+
+  sql:
+    init:
+      mode: always
+      continue-on-error: true
+      schema-locations:
+        - classpath:org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql
+        - classpath:org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql
+        - classpath:org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+
+services:
+  users:
+    url: ${USERS_SERVICE_URL:http://MSVC-USERS-ROLES}
+
+app:
+  frontend:
+    origin: ${FRONTEND_ORIGIN:http://localhost:4200}
+    login-url: ${FRONTEND_LOGIN_URL:http://localhost:4200/login}
+
+auth:
+  issuer: ${AUTH_ISSUER:http://localhost:9000}
+  clients:
+    gateway:
+      client-id: ${GATEWAY_CLIENT_ID:gateway-bff}
+      client-secret: ${GATEWAY_CLIENT_SECRET:gateway-secret-dev}
+      redirect-uri: ${GATEWAY_REDIRECT_URI:http://localhost:8080/login/oauth2/code/bff}
+
+  jwt:
+    key-store: ${AUTH_JWT_KEYSTORE:file:./secrets/auth-server.p12}
+    key-store-password: ${AUTH_JWT_KEYSTORE_PASSWORD:changeit}
+    key-alias: ${AUTH_JWT_KEY_ALIAS:auth-server}
+    key-password: ${AUTH_JWT_KEY_PASSWORD:changeit}
+    key-id: ${AUTH_JWT_KEY_ID:auth-key-dev-01}
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: TRACE
