@@ -71,62 +71,59 @@ spring:
         webmvc:
 
           routes:
+            - id: auth-service
+              uri: http://panaderia.test:9000
+              predicates:
+                - Path=/api/auth/**
 
             - id: msvc-content
-
               uri: lb://MSVC-CONTENT
-
               predicates:
                 - Path=/api/v1/contents/**
+              filters:
+                - StripPrefix=3
+                - TokenRelay=
 
+            - id: msvc-products
+              uri: lb://MSVC-PRODUCTS
+              predicates:
+                - Path=/api/v1/products/**
               filters:
                 - StripPrefix=3
                 - TokenRelay=
 
 
             - id: msvc-users-roles
-
               uri: lb://MSVC-USERS-ROLES
-
               predicates:
                 - Path=/api/v1/users/roles/**
-
               filters:
                 - StripPrefix=4
                 - TokenRelay=
 
 
             - id: msvc-clients
-
               uri: lb://MSVC-CLIENTS
-
               predicates:
                 - Path=/api/v1/clients/**
-
               filters:
                 - StripPrefix=3
                 - TokenRelay=
 
 
             - id: msvc-messaging
-
               uri: lb://MSVC-MESSAGING
-
               predicates:
                 - Path=/api/v1/messaging/**
-
               filters:
                 - StripPrefix=3
                 - TokenRelay=
 
 
             - id: images-service
-
               uri: lb://IMAGES-SERVICE
-
               predicates:
                 - Path=/api/v1/images/**
-
               filters:
                 - StripPrefix=3
                 - TokenRelay=

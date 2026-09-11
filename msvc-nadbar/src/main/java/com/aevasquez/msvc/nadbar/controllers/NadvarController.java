@@ -5,12 +5,16 @@ import com.aevasquez.msvc.nadbar.services.NadbarService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 import java.util.UUID;
 
 @RestController
+@EnableMethodSecurity
+@RequestMapping("/nadbar")
 public class NadvarController {
 
     @Autowired
@@ -21,6 +25,7 @@ public class NadvarController {
         return ResponseEntity.ok().body(nadbarService.getNadbarById(id));
     }
 
+    @PreAuthorize("permitAll()")
     @GetMapping("/getNadbars")
     public ResponseEntity<?> getNadbar(@RequestParam("typeNadbar") String typeNadbar){
         return ResponseEntity.ok().body(nadbarService.getNadbarByType(typeNadbar));

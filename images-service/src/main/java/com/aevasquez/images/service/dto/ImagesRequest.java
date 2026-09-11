@@ -1,4 +1,4 @@
-package com.aevasquez.images.service;
+package com.aevasquez.images.service.dto;
 
 import java.util.List;
 

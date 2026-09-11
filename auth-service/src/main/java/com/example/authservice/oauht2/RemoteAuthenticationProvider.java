@@ -40,6 +40,7 @@ public class RemoteAuthenticationProvider implements AuthenticationProvider {
                         username,
                         password
                 );
+        System.out.println(response);
 
         if (response == null || !response.authenticated()) {
             throw new BadCredentialsException(

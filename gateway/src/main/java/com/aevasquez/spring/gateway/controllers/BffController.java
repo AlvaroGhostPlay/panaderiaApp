@@ -1,5 +1,7 @@
 package com.aevasquez.spring.gateway.controllers;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -28,41 +30,20 @@ public class BffController {
 
 
     @GetMapping("/me")
-    public Map<String, Object> me(
-
-            @AuthenticationPrincipal
-            OidcUser user
-
-    ) {
+    public ResponseEntity<?> me(@AuthenticationPrincipal OidcUser user) {
 
         Map<String, Object> response =
                 new LinkedHashMap<>();
 
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.OK).body(Map.of("authenticated", false));
+        }
 
-        response.put(
-                "authenticated",
-                true
-        );
-
-
-        response.put(
-                "sub",
-                user.getSubject()
-        );
-
-
-        response.put(
-                "name",
-                user.getName()
-        );
-
-
-        response.put(
-                "authorities",
-                user.getAuthorities()
-        );
-
-
-        return response;
+        response.put("authenticated", true);
+        response.put("sub", user.getSubject());
+        response.put("name", user.getName());
+        response.put("authorities", user.getAuthorities());
+        response.put("roles", user.getClaimAsStringList("roles"));
+        return ResponseEntity.ok(response);
     }
 }

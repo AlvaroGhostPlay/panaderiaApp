@@ -6,6 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -17,18 +18,38 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/public")
-public class FileController {
+@RequestMapping("/private")
+public class FilePrivateController {
+    private final String PRIVATE_DIR = "image/uploads/private/";
     private final String PUBLIC_DIR = "image/uploads/public/";
 
-    @PreAuthorize("permitAll()")
+
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadImage(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("isPublic") boolean isPublic) throws IOException {
+
+        String directory = isPublic ? PUBLIC_DIR : PRIVATE_DIR;
+        Path filePath = Paths.get(directory + file.getOriginalFilename());
+
+        // Crea los directorios si no existen
+        Files.createDirectories(filePath.getParent());
+
+        // Guarda el archivo en el disco
+        Files.write(filePath, file.getBytes());
+
+        return ResponseEntity.ok("Archivo subido con éxito: " + file.getOriginalFilename());
+    }
+
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     @GetMapping("/images")
     public ResponseEntity<?> getpubliImage(
             @RequestParam String filename) {
 
         try {
 
-            Path filePath = Paths.get(PUBLIC_DIR)
+            Path filePath = Paths.get(PRIVATE_DIR)
                     .resolve(filename)
                     .normalize();
 
@@ -58,9 +79,9 @@ public class FileController {
         }
     }
 
-    @PreAuthorize("permitAll()")
-    @PostMapping("/images/map")
-    public ResponseEntity<?> getPublicImages(
+    @PostMapping("/products-image-map")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
+    public ResponseEntity<?> getImagesByUrlImage(
             @RequestBody Map<Object, String> images) {
 
         Map<Object, String> imagesBase64 = images.entrySet()
@@ -73,7 +94,7 @@ public class FileController {
 
                                 String imageName = entry.getValue();
 
-                                Path filePath = Paths.get(PUBLIC_DIR)
+                                Path filePath = Paths.get(PRIVATE_DIR)
                                         .resolve(imageName)
                                         .normalize();
 

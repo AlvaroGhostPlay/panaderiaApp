@@ -7,36 +7,67 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.stereotype.Component;
 
 @Component
-public class JwtTokenCustomizer  implements OAuth2TokenCustomizer<JwtEncodingContext> {
+public class JwtTokenCustomizer
+        implements OAuth2TokenCustomizer<JwtEncodingContext> {
 
     @Override
     public void customize(JwtEncodingContext context) {
-        if (!OAuth2TokenType.ACCESS_TOKEN
-                .equals(context.getTokenType())) {
-            return;
-        }
 
         Object principal =
                 context
                         .getPrincipal()
                         .getPrincipal();
 
-        if (!(principal instanceof
-                AuthenticatedUserPrincipal user)) {
+        if (!(principal instanceof AuthenticatedUserPrincipal user)) {
             return;
         }
 
-        context.getClaims()
-                .subject(
-                        user.userId().toString()
-                )
-                .claim(
-                        "username",
-                        user.username()
-                )
-                .claim(
-                        "roles",
-                        user.roles()
-                );
+        /*
+         * ACCESS TOKEN
+         */
+        if (OAuth2TokenType.ACCESS_TOKEN
+                .equals(context.getTokenType())) {
+
+            context.getClaims()
+                    .subject(
+                            user.userId().toString()
+                    )
+                    .claim(
+                            "username",
+                            user.username()
+                    )
+                    .claim(
+                            "roles",
+                            user.roles()
+                    );
+
+            return;
+        }
+
+        /*
+         * ID TOKEN
+         *
+         * El ID Token de OIDC no utiliza
+         * OAuth2TokenType.ACCESS_TOKEN.
+         *
+         * Su valor es "id_token".
+         */
+        if ("id_token".equals(
+                context.getTokenType().getValue()
+        )) {
+
+            context.getClaims()
+                    .subject(
+                            user.userId().toString()
+                    )
+                    .claim(
+                            "username",
+                            user.username()
+                    )
+                    .claim(
+                            "roles",
+                            user.roles()
+                    );
+        }
     }
 }

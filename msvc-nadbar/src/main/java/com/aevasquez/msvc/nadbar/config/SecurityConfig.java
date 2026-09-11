@@ -1,28 +1,23 @@
-package com.aevasquez.images.service.config;
+package com.aevasquez.msvc.nadbar.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
-public class WebConfig implements WebMvcConfigurer {
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Todo lo que entre a /public/images/ buscará en la carpeta local "uploads/public/"
-        registry.addResourceHandler("/public/images/**")
-                .addResourceLocations("file:uploads/public/");
-    }
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
 
     // 1. Agrega esto para ignorar completamente las rutas públicas
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().requestMatchers("/public/**");
+        return (web) -> web.ignoring().requestMatchers("/content/**", "/nadbar/**");
     }
 
     @Bean

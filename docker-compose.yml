@@ -133,6 +133,34 @@ services:
     networks:
       - red-panaderia
 
+  msvc-products:
+    build:
+      context: ./msvc-products
+      dockerfile: Dockerfile
+
+    container_name: msvc-products
+
+    environment:
+      SERVER_NAME: msvc-products
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: "http://eureka-server:8761/eureka/"
+
+      DATABASE_URL: "jdbc:postgresql://postgres-db:5432/store-db"
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: sasa
+
+      JPA_SHOW_SQL: "true"
+      JPA_SHOW_FORMAT_SQL: "true"
+
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+      eureka-server:
+        condition: service_started
+
+    networks:
+      - red-panaderia
+
 
   auth-server:
     build:
@@ -155,8 +183,8 @@ services:
 
       AUTH_ISSUER: "http://panaderia.test:9000"
 
-      FRONTEND_ORIGIN: "http://localhost:4200"
-      FRONTEND_LOGIN_URL: "http://localhost:4200/login"
+      FRONTEND_ORIGIN: "http://panaderia.test:4200/"
+      FRONTEND_LOGIN_URL: "http://panaderia.test:4200/login"
 
       GATEWAY_CLIENT_ID: "gateway-bff"
       GATEWAY_CLIENT_SECRET: "gateway-secret-dev"
@@ -224,7 +252,7 @@ services:
 
       GATEWAY_REDIRECT_URI: "http://panaderia.test:8080/login/oauth2/code/bff"
 
-      FRONTEND_URL: "http://localhost:4200"
+      FRONTEND_URL: "http://panaderia.test:4200"
 
     depends_on:
       redis-bff:

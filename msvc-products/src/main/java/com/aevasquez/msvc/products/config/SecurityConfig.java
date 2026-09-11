@@ -1,23 +1,18 @@
-package com.aevasquez.images.service.config;
+package com.aevasquez.msvc.products.config;
 
+import feign.RequestInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
-public class WebConfig implements WebMvcConfigurer {
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Todo lo que entre a /public/images/ buscará en la carpeta local "uploads/public/"
-        registry.addResourceHandler("/public/images/**")
-                .addResourceLocations("file:uploads/public/");
-    }
+public class SecurityConfig {
 
     // 1. Agrega esto para ignorar completamente las rutas públicas
     @Bean
@@ -36,5 +31,27 @@ public class WebConfig implements WebMvcConfigurer {
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
 
         return http.build();
+    }
+
+    @Bean
+    public RequestInterceptor requestTokenBearerInterceptor() {
+        return requestTemplate -> {
+
+            Authentication authentication =
+                    SecurityContextHolder
+                            .getContext()
+                            .getAuthentication();
+
+            if (authentication instanceof JwtAuthenticationToken jwt) {
+
+                String token =
+                        jwt.getToken().getTokenValue();
+
+                requestTemplate.header(
+                        "Authorization",
+                        "Bearer " + token
+                );
+            }
+        };
     }
 }
