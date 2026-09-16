@@ -16,6 +16,6 @@ public class ProductCategoryController {
 
     @GetMapping()
     public ResponseEntity<?> getCategories(){
-        return ResponseEntity.ok().body(productCategoryService.getAllCategories());
+        return ResponseEntity.ok().body(productCategoryService.getAllProductCategories());
     }
 }

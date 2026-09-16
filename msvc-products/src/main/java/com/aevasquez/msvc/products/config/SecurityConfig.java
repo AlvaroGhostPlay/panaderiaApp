@@ -33,6 +33,10 @@ public class SecurityConfig {
         return http.build();
     }
 
+
+    /*
+    Este bean sirve para cuando se use feing este mande el bearer token en cada peticion que haga
+     */
     @Bean
     public RequestInterceptor requestTokenBearerInterceptor() {
         return requestTemplate -> {

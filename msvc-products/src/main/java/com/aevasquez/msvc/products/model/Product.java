@@ -23,7 +23,7 @@ public class Product {
             name = "products_categories_map",
             schema = "storedb",
             joinColumns = @JoinColumn(name = "product_id"),
-            inverseJoinColumns = @JoinColumn(name = "product_category_id ")
+            inverseJoinColumns = @JoinColumn(name = "product_category_id")
     )
     private Set<ProductCategory> productCategory;
 

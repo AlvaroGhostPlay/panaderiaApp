@@ -101,7 +101,7 @@ public class SecurityConfig {
                                 "/api/v1/products/public/**",
                                 "/logout/**"
                         ).permitAll()
-                        .requestMatchers("/api/v1/products/**").authenticated()
+                        .requestMatchers("/api/v1/products/**", "/api/v1/paymment/**").authenticated()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )

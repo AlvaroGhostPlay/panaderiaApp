@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: ${SERVER_NAME:msvc-paymment}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AUTH_ISSUER:http://panaderia.test:9000}
+
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/store-db}
+    username: ${DATABASE_USER:postgres}
+    password: ${DATABASE_PASSWORD:sasa}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    show-sql: ${JPA_SHOW_SQL:true}
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: ${JPA_SHOW_FORMAT_SQL:true}
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:http://localhost:8761/eureka/}
+
+  instance:
+    prefer-ip-address: true
+
+
+services:
+  products:
+    url: ${PRODUCTS_SERVICE_URL:http://MSVC-PRODUCTS}
+
+
+server:
+  port: 0

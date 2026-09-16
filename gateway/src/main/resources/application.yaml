@@ -92,6 +92,14 @@ spring:
                 - StripPrefix=3
                 - TokenRelay=
 
+            - id: msvc-paymmet
+              uri: lb://MSVC-PAYMMENT
+              predicates:
+                - Path=/api/v1/paymment/**
+              filters:
+                - StripPrefix=3
+                - TokenRelay=
+
 
             - id: msvc-users-roles
               uri: lb://MSVC-USERS-ROLES

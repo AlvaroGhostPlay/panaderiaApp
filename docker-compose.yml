@@ -93,6 +93,37 @@ services:
 
       JPA_SHOW_SQL: "true"
       JPA_SHOW_FORMAT_SQL: "true"
+      AUTH_ISSUER: "http://panaderia.test:9000"
+
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+      eureka-server:
+        condition: service_started
+
+    networks:
+      - red-panaderia
+
+  msvc-paymment:
+    build:
+      context: ./msvc-paymment
+      dockerfile: Dockerfile
+
+    container_name: msvc-paymment
+
+    environment:
+      SERVER_NAME: msvc-paymment
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: "http://eureka-server:8761/eureka/"
+
+      DATABASE_URL: "jdbc:postgresql://postgres-db:5432/store-db"
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: sasa
+
+      JPA_SHOW_SQL: "true"
+      JPA_SHOW_FORMAT_SQL: "true"
+      AUTH_ISSUER: "http://panaderia.test:9000"
+      PRODUCTS_SERVICE_URL: "http://MSVC-PRODUCTS"
 
     depends_on:
       postgres-db:
