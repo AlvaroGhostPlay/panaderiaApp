@@ -92,7 +92,7 @@ public class ProductServiceImpl implements ProductService{
     }
 
     @Override
-    public List<Product> getAllProductsByIds(List<UUID> ids) {
+    public List<ProductResponseDto> getAllProductsByIds(List<UUID> ids) {
         List<Product> products = productRepository.findAllByProductIdIn(ids);
         Map<String, String> imagesMap = products
                 .stream()
@@ -109,7 +109,17 @@ public class ProductServiceImpl implements ProductService{
                 .map(product -> {
             String image = finalImagesMap.get(product.getProductId().toString());
             product.setImageUrl(image);
-            return product;
+            return new ProductResponseDto(
+                    product.getProductId(),
+                    product.getProductName(),
+                    product.getPrice(),
+                    product.getOffer(),
+                    product.getImageUrl(),
+                    product.getProductCategory()
+                            .stream()
+                            .map(category -> new ProductCategoryResponseDto(category.getProductCategoryId(), category.getTypeName()))
+                            .collect(Collectors.toSet())
+            );
         }).toList();
     }
 }

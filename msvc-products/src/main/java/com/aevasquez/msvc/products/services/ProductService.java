@@ -10,5 +10,5 @@ import java.util.UUID;
 
 public interface ProductService {
     Page<ProductResponseDto> getAllProductPage(Pageable pageable, String categoria);
-    List<Product> getAllProductsByIds(List<UUID> ids);
+    List<ProductResponseDto> getAllProductsByIds(List<UUID> ids);
 }
