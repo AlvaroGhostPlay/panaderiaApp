@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ProductService {
-    Page<ProductResponseDto> getAllProductPage(Pageable pageable, String categoria);
-    List<Product> getAllProductsByIds(List<UUID> ids);
+    Page<ProductResponseDto> getAllProductPage(Pageable pageable, String categoria, UUID userId);
+    Page<ProductResponseDto> getAllProductFavoritesPage(Pageable pageable, String categoria, UUID userId);
+    Page<ProductResponseDto> addOrRemoveFavoriteProductByUser(UUID productId, UUID userId, String categoria, Pageable pageable);
+    Page<ProductResponseDto> addOrRemoveFavoriteProductByUserFromFavorites(UUID productId, UUID userId, String categoria, Pageable pageable);
+    List<ProductResponseDto> getAllProductsByIds(List<UUID> ids, UUID userId);
 }

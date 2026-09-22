@@ -1,18 +1,19 @@
 package com.aevasquez.msvc.products.services;
 
-import com.aevasquez.msvc.products.dto.ProductCategoryResponseDto;
 import com.aevasquez.msvc.products.dto.ProductResponseDto;
+import com.aevasquez.msvc.products.mapper.ProductMapper;
+import com.aevasquez.msvc.products.model.FavoriteProduct;
 import com.aevasquez.msvc.products.model.Product;
+import com.aevasquez.msvc.products.repositories.FavoriteProductRepository;
 import com.aevasquez.msvc.products.repositories.ProductRepository;
+import jakarta.ws.rs.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Service
 public class ProductServiceImpl implements ProductService{
@@ -21,95 +22,57 @@ public class ProductServiceImpl implements ProductService{
     private ProductRepository productRepository;
 
     @Autowired
-    private ImageService imageService;
+    private FavoriteProductRepository favoriteProductRepository;
 
+    @Autowired
+    private ProductMapper productMapper;
+
+    @Transactional(readOnly = true)
     @Override
-    //@Transactional
-    public Page<ProductResponseDto> getAllProductPage(
-            Pageable pageable,
-            String categoria
-    ) {
+    public Page<ProductResponseDto> getAllProductPage(Pageable pageable, String categoria, UUID userId) {
+        return this.productMapper.createProductFavoriteProjection(categoria, userId, pageable);
+    }
 
-        System.out.println("============================");
-        System.out.println("CATEGORIA = " + categoria);
-        System.out.println("PAGE      = " + pageable.getPageNumber());
-        System.out.println("SIZE      = " + pageable.getPageSize());
+    @Transactional(readOnly = true)
+    @Override
+    public Page<ProductResponseDto> getAllProductFavoritesPage(Pageable pageable, String categoria, UUID userId) {
+        return this.productMapper.createProductFavoriteProjection(categoria, userId, pageable);
+    }
 
-        Page<Product> productPage =
-                productRepository.findAllByProductCategoryByProductId(
-                        categoria,
-                        pageable
-                );
+    @Transactional
+    @Override
+    public Page<ProductResponseDto> addOrRemoveFavoriteProductByUser(UUID productId, UUID userId, String categoria, Pageable pageable) {
+        Optional<FavoriteProduct> productFavorite = favoriteProductRepository.findByUserIdAndProductId(userId, productId);
+        if (productFavorite.isPresent()) {
+            favoriteProductRepository.delete(productFavorite.get());
+        } else {
+            Product product = this.productRepository.findById(productId).orElseThrow(() -> new NotFoundException());
+            FavoriteProduct favoriteProduct = new FavoriteProduct();
+            favoriteProduct.setUserId(userId);
+            favoriteProduct.setProduct(product);
+            favoriteProductRepository.save(favoriteProduct);
+        }
+        return this.productMapper.createProductFavoriteProjection(categoria, userId, pageable);
+    }
 
-        System.out.println("CONTENT SIZE   = "
-                + productPage.getContent().size());
-
-        System.out.println("TOTAL ELEMENTS = "
-                + productPage.getTotalElements());
-
-        System.out.println("TOTAL PAGES    = "
-                + productPage.getTotalPages());
-
-        productPage.getContent().forEach(product ->
-                System.out.println(
-                        "PRODUCTO = "
-                                + product.getProductId()
-                                + " | "
-                                + product.getProductName()
-                )
-        );
-
-        System.out.println("============================");
-
-        Map<String, String> imagesMap = productPage.stream()
-                .collect(Collectors.toMap(
-                        product -> product.getProductId().toString(),
-                        Product::getImageUrl
-                ));
-
-        imagesMap = imageService.getImagesByMap(imagesMap);
-
-        Map<String, String> finalImagesMap = imagesMap;
-
-        return productPage.map(product -> {
-            product.setImageUrl(
-                    finalImagesMap.get(
-                            product.getProductId().toString()
-                    )
-            );
-            return new ProductResponseDto(
-                    product.getProductId(),
-                    product.getProductName(),
-                    product.getPrice(),
-                    product.getOffer(),
-                    product.getImageUrl(),
-                    product.getProductCategory()
-                            .stream()
-                            .map(category -> new ProductCategoryResponseDto(category.getProductCategoryId(), category.getTypeName()))
-                            .collect(Collectors.toSet())
-                    );
-        });
+    @Transactional
+    @Override
+    public Page<ProductResponseDto> addOrRemoveFavoriteProductByUserFromFavorites(UUID productId, UUID userId, String categoria, Pageable pageable) {
+        Optional<FavoriteProduct> productFavorite = favoriteProductRepository.findByUserIdAndProductId(userId, productId);
+        if (productFavorite.isPresent()) {
+            favoriteProductRepository.delete(productFavorite.get());
+        } else {
+            Product product = this.productRepository.getReferenceById(productId);
+            FavoriteProduct favoriteProduct = new FavoriteProduct();
+            favoriteProduct.setUserId(userId);
+            favoriteProduct.setProduct(product);
+            favoriteProductRepository.save(favoriteProduct);
+        }
+        return this.productMapper.createProductFavoriteProjection(categoria, userId, pageable);
     }
 
     @Override
-    public List<Product> getAllProductsByIds(List<UUID> ids) {
-        List<Product> products = productRepository.findAllByProductIdIn(ids);
-        Map<String, String> imagesMap = products
-                .stream()
-                .collect(Collectors.toMap(
-                        product -> product.getProductId().toString(),
-                        product -> product.getImageUrl()
-                ));
-
-        imagesMap = this.imageService.getImagesByMap(imagesMap);
-
-        Map<String, String> finalImagesMap = imagesMap;
-        return products
-                .stream()
-                .map(product -> {
-            String image = finalImagesMap.get(product.getProductId().toString());
-            product.setImageUrl(image);
-            return product;
-        }).toList();
+    public List<ProductResponseDto> getAllProductsByIds(List<UUID> ids, UUID userId) {
+        return productMapper.createProductFavoriteProjection(ids, userId);
     }
 }

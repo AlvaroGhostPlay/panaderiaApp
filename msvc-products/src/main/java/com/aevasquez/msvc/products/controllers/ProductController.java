@@ -23,16 +23,52 @@ public class ProductController {
     public ResponseEntity<?> getProductsPage(
             @RequestParam Integer page,
             @RequestParam Integer cantidad,
-            @RequestParam String categoria){
+            @RequestParam String categoria,
+            @RequestParam UUID userId){
 
         Pageable pageable = PageRequest.of(page, cantidad);
-        return ResponseEntity.ok().body(productService.getAllProductPage(pageable, categoria));
+        return ResponseEntity.ok().body(productService.getAllProductPage(pageable, categoria, userId));
+    }
+
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
+    @GetMapping("/getProductsFavorites")
+    public ResponseEntity<?> getProductsFavorites(
+            @RequestParam UUID userId,
+            @RequestParam Integer page,
+            @RequestParam Integer cantidad,
+            @RequestParam String categoria){
+        Pageable pageable = PageRequest.of(page, cantidad);
+        return ResponseEntity.ok().body(productService.getAllProductFavoritesPage(pageable, categoria, userId));
+    }
+
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
+    @PostMapping("/addOrRemoveProductFavoriteByUser")
+    public ResponseEntity<?> addOrRemoveProductFavoriteByUser(
+            @RequestBody UUID productId,
+            @RequestParam UUID userId,
+            @RequestParam Integer page,
+            @RequestParam Integer cantidad,
+            @RequestParam String categoria){
+        Pageable pageable = PageRequest.of(page, cantidad);
+        return ResponseEntity.ok().body(productService.addOrRemoveFavoriteProductByUser(productId, userId, categoria, pageable));
+    }
+
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
+    @PostMapping("/addOrRemoveProductFavoriteByUserFromFavorites")
+    public ResponseEntity<?> addOrRemoveProductFavoriteByUserFromFavorites(
+            @RequestBody UUID productId,
+            @RequestParam UUID userId,
+            @RequestParam Integer page,
+            @RequestParam Integer cantidad,
+            @RequestParam String categoria){
+        Pageable pageable = PageRequest.of(page, cantidad);
+        return ResponseEntity.ok().body(productService.addOrRemoveFavoriteProductByUserFromFavorites(productId, userId, categoria, pageable));
     }
 
     @PreAuthorize("hasAnyRole('ROLE_USER')")
     @PostMapping("/getProductsByIds")
-    public ResponseEntity<?> getProductsByIds(@RequestBody List<UUID> ids){
-        return ResponseEntity.ok().body(productService.getAllProductsByIds(ids));
+    public ResponseEntity<?> getProductsByIds(@RequestBody List<UUID> ids, @RequestParam UUID userId){
+        return ResponseEntity.ok().body(productService.getAllProductsByIds(ids,  userId));
     }
 
 }
