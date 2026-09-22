@@ -5,8 +5,9 @@ import com.alvaro.msvc.paymment.dto.CartResponseDto;
 import com.alvaro.msvc.paymment.dto.ProductResponseDto;
 import com.alvaro.msvc.paymment.models.Cart;
 import com.alvaro.msvc.paymment.models.CartDetail;
-import com.alvaro.msvc.paymment.services.ProductClient;
+import com.alvaro.msvc.paymment.services.ProductServiceFeign;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 public class MapperCart {
 
     @Autowired
-    private ProductClient productClient;
+    private ProductServiceFeign productServiceFeign;
 
     public CartResponseDto toCartResponseDto(Cart cart) {
         Integer cantidad = cart.getCartDetails().size();
@@ -39,9 +40,10 @@ public class MapperCart {
                 .map(cartDetail -> cartDetail.getProductId())
                 .toList();
 
-        List<ProductResponseDto> productResponse = this.productClient.findByIds(productIds);
+        ResponseEntity<List<ProductResponseDto>> productResponse = this.productServiceFeign.getProductsByIds(productIds);
+        List<ProductResponseDto> products = productResponse.getBody();
 
-        Map<UUID, ProductResponseDto> productsById = productResponse.stream()
+        Map<UUID, ProductResponseDto> productsById = products.stream()
                 .collect(Collectors.toMap(
                         ProductResponseDto::productId,
                         Function.identity()

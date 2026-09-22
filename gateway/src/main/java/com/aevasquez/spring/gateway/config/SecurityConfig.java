@@ -20,6 +20,7 @@ import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepo
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -40,16 +41,20 @@ public class SecurityConfig {
             ClientRegistrationRepository clientRegistrationRepository,
             OAuth2AuthorizedClientRepository authorizedClientRepository) {
 
-        OAuth2AuthorizedClientProvider provider = OAuth2AuthorizedClientProviderBuilder.builder()
-                .authorizationCode()
-                .refreshToken()
-                .build();
+        OAuth2AuthorizedClientProvider provider =
+                OAuth2AuthorizedClientProviderBuilder.builder()
+                        .authorizationCode()
+                        .refreshToken()
+                        .build();
 
-        DefaultOAuth2AuthorizedClientManager manager = new DefaultOAuth2AuthorizedClientManager(
-                clientRegistrationRepository,
-                authorizedClientRepository
-        );
+        DefaultOAuth2AuthorizedClientManager manager =
+                new DefaultOAuth2AuthorizedClientManager(
+                        clientRegistrationRepository,
+                        authorizedClientRepository
+                );
+
         manager.setAuthorizedClientProvider(provider);
+
         return manager;
     }
 
@@ -58,13 +63,36 @@ public class SecurityConfig {
             @Value("${app.frontend-url}") String frontendUrl) {
 
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(frontendUrl));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+
+        configuration.setAllowedOrigins(
+                List.of(frontendUrl)
+        );
+
+        configuration.setAllowedMethods(
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "PATCH",
+                        "OPTIONS"
+                )
+        );
+
+        configuration.setAllowedHeaders(
+                List.of("*")
+        );
+
         configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration(
+                "/**",
+                configuration
+        );
+
         return source;
     }
 
@@ -73,60 +101,135 @@ public class SecurityConfig {
             HttpSecurity http,
             OAuth2AuthorizedClientRepository authorizedClientRepository,
             ClientRegistrationRepository clientRegistrationRepository,
-            @Value("${app.frontend-url}") String frontendUrl) throws Exception {
+            @Value("${app.frontend-url}") String frontendUrl
+    ) throws Exception {
 
-        // Handler para el logout centralizado en el Auth Server (RP-Initiated Logout)
         OidcClientInitiatedLogoutSuccessHandler oidcLogoutSuccessHandler =
-                new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
-        oidcLogoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}/");
+                new OidcClientInitiatedLogoutSuccessHandler(
+                        clientRegistrationRepository
+                );
+
+        oidcLogoutSuccessHandler.setPostLogoutRedirectUri(
+                "{baseUrl}/"
+        );
 
         http
-                // 1. Devuelve HTTP 401 Unauthorized en peticiones no autenticadas
-                // en lugar de hacer un redirect 302 hacia el Auth Server (:9000)
+
                 .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                        .authenticationEntryPoint(
+                                new HttpStatusEntryPoint(
+                                        HttpStatus.UNAUTHORIZED
+                                )
+                        )
                 )
+
                 .authorizeHttpRequests(authorize -> authorize
+
                         .requestMatchers(
                                 "/oauth2/**",
                                 "/login/**",
+
+                                // CSRF
                                 "/bff/csrf",
-                                "/bff/me", // <-- Opcional: Agrégalo aquí si quieres que pase sin 401 y devuelva JSON vacio
+
+                                // BFF
+                                "/bff/me",
+
                                 "/actuator/health",
                                 "/error",
+
+                                // Login propio
                                 "/api/auth/csrf",
                                 "/api/auth/login",
+
+                                // Públicos
                                 "/api/v1/contents/**",
                                 "/api/v1/images/public/**",
                                 "/api/v1/products/public/**",
+
                                 "/logout/**"
                         ).permitAll()
-                        .requestMatchers("/api/v1/products/**", "/api/v1/paymment/**").authenticated()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        .requestMatchers(
+                                "/api/v1/products/**",
+                                "/api/v1/paymment/**"
+                        ).authenticated()
+
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        ).permitAll()
+
                         .anyRequest().authenticated()
                 )
+
+                /*.oauth2Login(oauth2 -> oauth2
+                        .authorizedClientRepository(
+                                authorizedClientRepository
+                        )
+                        .successHandler(
+                                (request, response, authentication) ->
+                                        response.sendRedirect(
+                                                frontendUrl + "/rollback"
+                                        )
+                        )
+                )*/
+
                 .oauth2Login(oauth2 -> oauth2
                         .authorizedClientRepository(authorizedClientRepository)
-                        .successHandler((request, response, authentication) ->
-                                response.sendRedirect(frontendUrl + "/rollback")
+                        .successHandler((request, response, authentication) -> {
+
+                            CsrfToken csrfToken = (CsrfToken) request.getAttribute(
+                                    CsrfToken.class.getName()
+                            );
+
+                            response.sendRedirect(
+                                    frontendUrl + "/rollback"
+                            );
+                        })
+                )
+
+                .oauth2Client(oauth2 -> oauth2
+                        .authorizedClientRepository(
+                                authorizedClientRepository
                         )
                 )
-                .oauth2Client(oauth2 -> oauth2
-                        .authorizedClientRepository(authorizedClientRepository)
-                )
+
                 .logout(logout -> logout
-                        .logoutSuccessHandler(oidcLogoutSuccessHandler)
+                        .logoutSuccessHandler(
+                                oidcLogoutSuccessHandler
+                        )
                 )
+
+                /*
+                 * =====================================================
+                 * CSRF
+                 * =====================================================
+                 *
+                 * El login inicial no puede exigir un token que
+                 * todavía no hemos obtenido.
+                 *
+                 * Por eso /api/auth/login y /api/auth/csrf se ignoran.
+                 */
+
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRepository(
+                                CookieCsrfTokenRepository.withHttpOnlyFalse()
+                        )
+                        .csrfTokenRequestHandler(
+                                new SpaCsrfTokenRequestHandler()
+                        )
                         .ignoringRequestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/csrf",
                                 "/api/v1/images/public/**"
                         )
                 )
+
                 .cors(Customizer.withDefaults())
+
                 .formLogin(AbstractHttpConfigurer::disable)
+
                 .httpBasic(AbstractHttpConfigurer::disable);
 
         return http.build();
