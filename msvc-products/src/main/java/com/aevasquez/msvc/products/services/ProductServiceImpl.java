@@ -74,5 +74,5 @@ public class ProductServiceImpl implements ProductService{
     @Override
     public List<ProductResponseDto> getAllProductsByIds(List<UUID> ids, UUID userId) {
         return productMapper.createProductFavoriteProjection(ids, userId);
-    }
+}
 }
