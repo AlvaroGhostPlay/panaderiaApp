@@ -5,6 +5,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.UUID;
@@ -13,5 +14,5 @@ import java.util.UUID;
 public interface ProductServiceFeign {
 
     @PostMapping("/product/private/getProductsByIds")
-    ResponseEntity<List<ProductResponseDto>> getProductsByIds(@RequestBody List<UUID> ids);
+    ResponseEntity<List<ProductResponseDto>> getProductsByIds(@RequestBody List<UUID> ids, @RequestParam UUID userId);
 }

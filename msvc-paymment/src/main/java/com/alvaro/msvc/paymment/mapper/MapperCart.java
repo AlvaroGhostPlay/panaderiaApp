@@ -22,7 +22,7 @@ public class MapperCart {
     @Autowired
     private ProductServiceFeign productServiceFeign;
 
-    public CartResponseDto toCartResponseDto(Cart cart) {
+    public CartResponseDto toCartResponseDto(Cart cart, UUID userId) {
         Integer cantidad = cart.getCartDetails().size();
         return  new CartResponseDto(
                 cart.getCartId(),
@@ -30,17 +30,17 @@ public class MapperCart {
                 cart.getState(),
                 cart.getUpdated(),
                 cantidad,
-                this.toCartDetails(cart.getCartDetails())
+                this.toCartDetails(cart.getCartDetails(), userId)
         );
     }
 
-    public List<CartDetailResponseDto> toCartDetails(List<CartDetail> cartDetails) {
+    public List<CartDetailResponseDto> toCartDetails(List<CartDetail> cartDetails, UUID userId) {
         List<UUID> productIds = cartDetails
                 .stream()
                 .map(cartDetail -> cartDetail.getProductId())
                 .toList();
 
-        ResponseEntity<List<ProductResponseDto>> productResponse = this.productServiceFeign.getProductsByIds(productIds);
+        ResponseEntity<List<ProductResponseDto>> productResponse = this.productServiceFeign.getProductsByIds(productIds, userId);
         List<ProductResponseDto> products = productResponse.getBody();
 
         Map<UUID, ProductResponseDto> productsById = products.stream()
@@ -61,7 +61,8 @@ public class MapperCart {
                 cartDetail.getCartDetailId(),
                 productResponse,
                 cartDetail.getQuantity(),
-                cartDetail.getUpdated()
+                cartDetail.getUpdated(),
+                productResponse.favorite()
         );
     }
 }

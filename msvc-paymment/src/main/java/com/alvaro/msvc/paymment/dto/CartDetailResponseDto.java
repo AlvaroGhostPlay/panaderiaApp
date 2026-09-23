@@ -7,6 +7,7 @@ public record CartDetailResponseDto(
         UUID cartDetailId,
         ProductResponseDto  product,
         Integer quantity,
-        Date updated
+        Date updated,
+        Boolean favorite
 ) {
 }

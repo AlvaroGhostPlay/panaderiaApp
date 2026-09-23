@@ -9,6 +9,7 @@ public record ProductResponseDto(
         Float price,
         Boolean offer,
         String imageUrl,
+        Boolean favorite,
         Set<ProductCategoryResponseDto> productCategory
 ) {
 }

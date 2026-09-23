@@ -34,10 +34,10 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public CartResponseDto getCartDetail(UUID userId) {
         return cartRepository.findByUserIdAndStateIsFalse(userId)
-                .map(cart -> mapperCart.toCartResponseDto(cart))
+                .map(cart -> mapperCart.toCartResponseDto(cart, userId))
                 .orElseThrow(() -> new NotFoundException("No se encuentra carrito disponible, debe de crear uno", HttpStatus.NOT_FOUND.value()));
     }
 
@@ -80,6 +80,6 @@ public class CartServiceImpl implements CartService {
 
         cartRepository.save(cart);
 
-        return mapperCart.toCartResponseDto(cart);
+        return mapperCart.toCartResponseDto(cart, userId);
     }
 }

@@ -44,7 +44,7 @@ public class ProductController {
     @PreAuthorize("hasAnyRole('ROLE_USER')")
     @PostMapping("/addOrRemoveProductFavoriteByUser")
     public ResponseEntity<?> addOrRemoveProductFavoriteByUser(
-            @RequestBody UUID productId,
+            @RequestParam UUID productId,
             @RequestParam UUID userId,
             @RequestParam Integer page,
             @RequestParam Integer cantidad,
@@ -56,7 +56,7 @@ public class ProductController {
     @PreAuthorize("hasAnyRole('ROLE_USER')")
     @PostMapping("/addOrRemoveProductFavoriteByUserFromFavorites")
     public ResponseEntity<?> addOrRemoveProductFavoriteByUserFromFavorites(
-            @RequestBody UUID productId,
+            @RequestParam UUID productId,
             @RequestParam UUID userId,
             @RequestParam Integer page,
             @RequestParam Integer cantidad,

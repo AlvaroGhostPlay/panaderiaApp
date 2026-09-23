@@ -54,7 +54,7 @@ public class ProductMapper {
     }
 
     public Page<ProductResponseDto> createProductFavoriteProjection(String categoria, UUID userId, Pageable pageable) {
-        Page<ProductFavoriteProjection> productPage = productRepository.findFavoriteProductsByCategory(categoria, userId, pageable);
+        Page<ProductFavoriteProjection> productPage = productRepository.findAllByProductCategoryByProductId(categoria, userId, pageable);
         Map<String, String>  imagesMap = this.getImagesByMap(productPage);
         return productPage.map(result -> this.createProductResponseDto(result, imagesMap));
     }

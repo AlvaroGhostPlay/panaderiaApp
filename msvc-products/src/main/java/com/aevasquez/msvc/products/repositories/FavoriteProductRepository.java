@@ -7,5 +7,5 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface FavoriteProductRepository extends JpaRepository<FavoriteProduct, UUID> {
-    Optional<FavoriteProduct> findByUserIdAndProductId(UUID userId, UUID productId);
+    Optional<FavoriteProduct> findByUserIdAndProduct_ProductId(UUID userId, UUID productId);
 }

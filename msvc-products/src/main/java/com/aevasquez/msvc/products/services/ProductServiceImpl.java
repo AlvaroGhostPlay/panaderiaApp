@@ -42,7 +42,7 @@ public class ProductServiceImpl implements ProductService{
     @Transactional
     @Override
     public Page<ProductResponseDto> addOrRemoveFavoriteProductByUser(UUID productId, UUID userId, String categoria, Pageable pageable) {
-        Optional<FavoriteProduct> productFavorite = favoriteProductRepository.findByUserIdAndProductId(userId, productId);
+        Optional<FavoriteProduct> productFavorite = favoriteProductRepository.findByUserIdAndProduct_ProductId(userId, productId);
         if (productFavorite.isPresent()) {
             favoriteProductRepository.delete(productFavorite.get());
         } else {
@@ -58,7 +58,7 @@ public class ProductServiceImpl implements ProductService{
     @Transactional
     @Override
     public Page<ProductResponseDto> addOrRemoveFavoriteProductByUserFromFavorites(UUID productId, UUID userId, String categoria, Pageable pageable) {
-        Optional<FavoriteProduct> productFavorite = favoriteProductRepository.findByUserIdAndProductId(userId, productId);
+        Optional<FavoriteProduct> productFavorite = favoriteProductRepository.findByUserIdAndProduct_ProductId(userId, productId);
         if (productFavorite.isPresent()) {
             favoriteProductRepository.delete(productFavorite.get());
         } else {
